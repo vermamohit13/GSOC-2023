@@ -38,4 +38,30 @@ For (1) the user actions will be to access the web interface and to open the IPP
 For (2) the same user actions as before will get offered ("Printer Options", "Printer Details"). Also only manually created CUPS queue should be displayed here, no temporary CUPS queues.
 Also the Printer Application entry and its queues should be grouped. For network printers and IPP-over-USB printers which are discovered we should also show a printer entry in the main view, which also has only the web interface in its menu. Grouping is here that entries from the same device (UUID, if not available hostname/IP/port is same) and manually created CUPS queues for such a device grouped with the entry of the device.
 
-With this approach I have updated the Main Window of Printer's panel. It is now able to list Printer Application and all the queues setup within in it. Apart from this, each entry has a link to it's web interface for any tasks. Also, the entries are grouped together as described above. Amongst all, the services are discovered asynchronously and displayed in the existing UI with minimal changes. This has taken a lot of my time since the implementation required me to go through entire printer's panel code to understand how it exactly work.
+With this approach I have updated the Main Window of Printer's panel. It is now able to list entries for Printer Application and all the queues setup within in it. Apart from this, each entry has a link to it's web interface for any tasks. Also, the entries are grouped together as described above. Amongst all, the services are discovered asynchronously and displayed in the existing UI with minimal changes. This has taken a lot of my time since the implementation required me to go through entire printer's panel code to understand how it exactly works.
+
+Here is a screencast of the New Main Panel-
+
+
+# Addition of Non Driverless Printer in GCC
+Modern printers usually are driverless IPP printers, and those get discovered and set up fully automatically with CUPS, no Printer Application is required for them, so it is easy for users to get up and running with them.
+
+Printers which do not do driverless IPP are either legacy printers, the many older printers which got developed before driverless IPP printing existed, and specialty printers. These need Printer Applications. As there will be several different Printer Applications and each one supporting another set of printers it is not trivial for the user to discover available non-IPP-driverless printers and find out which is the Printer Application to use and whether it is already installed.
+
+I have already been working on this segment of GCC since the previous Edition of GSoC and it required the revamp of New Printer Dialog of Printer's Panel which searches for non-IPP-driverless printers, local (USB) and network devices. With a lot of discussion with Marek (See here[]) and trying out several approaches, we have finally been able to freeze our approach. The addition of non-driverless printers with classic drivers is already implemented in the existing code, we will re-use this code, but we will proceed as follows for the whole thing:
+1. The "Add Printer" dialog lists all discovered USB and network printers (this we had already before, code for it must exist).
+2. The user selects a printer from the list.
+3. We try to auto-assign a driver, we start trying to assign a Printer Application, if there is one which supports the printer, we trigger the setup of a queue for this printer by sending an appropriate IPP request to the Printer Application.
+4. If we do not find an installed Printer Application supporting the printer, we try to find a classic driver and in case of success we create a classic CUPS queue with this driver. For all this we have already the code. We skip this step if our CUPS is version 3.x or newer or if it is the Snap.
+5. If we are still without success, we need to let the user choose manually, offering the manufacturer/model list, with all entries from both the installed Printer Applications and installed classic drivers. We also offer a button then to poll OpenPrinting for suitable Printer Applications and then try to install with cups-pk-helper.
+
+I am currently working on this approach since it was decided just a month ago. However, several things are completed as of it now and only a few weeks of work is required.
+
+## Expansion of DBus Interface of cups-pk-helper
+In the step 3 of the above approach we need a way for the GCC to get the available Printer Applications in the system. For this, I have to again discover services of type _ipps-system._tcp and make it available to GCC. Since, a lot of tasks were deligated to cups-pk-helper from GCC, I followed the same approach. I first wrote the synchronous discovery of Printer Application and then made it available via DBus calls. This also took me a bit of time to implement since I had to learn how to make new DBus interface for this call. Apart from this, I have also added an async method in GCC which calls for availing the service created by me in cups-pk-helper. Again, I also learned how to make async calls in C using glib.
+
+## Addition of new IPP Calls in GCC  
+PAPPL has made available IPP operations to request for discovered devices and available drivers from Printer Application as server. With this, we can now query a Printer App whether it contains a driver for it or not. Also, we can query for all available drivers available with a Printer Application. We can also request for the addition of a new device with a Printer Application with IPP calls. All of these calls have been implemented in GCC by me. 
+
+# Remaining Work
+THe only part which is remaining is the creation of GUI for Step 5 so we can show all the available drivers as described. Then, we have to refine the entire GCC with further suggestion from Marek & Till.
