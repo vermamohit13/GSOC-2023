@@ -42,7 +42,7 @@ Also the Printer Application entry and its queues should be grouped. For network
 With this approach I have updated the Main Window of Printer's panel. It is now able to list entries for Printer Application and all the queues setup within in it. Apart from this, each entry has a link to it's web interface for any tasks. Also, the entries are grouped together as described above. Amongst all, the services are discovered asynchronously and displayed in the existing UI with minimal changes. This has taken a lot of my time since the implementation required me to go through entire printer's panel code to understand how it exactly works.
 
 Here is a screencast of the New Main Panel-
-
+![Working Main Window]([https://drive.google.com/file/d/1SWEK2SsaYXct8m7G0vzSORVOZwP9JcX7/view?usp=sharing])
 
 # Addition of Non Driverless Printer in GCC
 Modern printers usually are driverless IPP printers, and those get discovered and set up fully automatically with CUPS, no Printer Application is required for them, so it is easy for users to get up and running with them.
